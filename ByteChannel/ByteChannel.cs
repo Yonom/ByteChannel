@@ -4,57 +4,84 @@ using System.Linq;
 
 namespace ByteChannel
 {
-    public class ByteChannel<T> : IChannel<Message<T>>
+    /// <summary>
+    /// Represents a channel through which bytes can be sent.
+    /// </summary>
+    /// <typeparam name="TSender">The type of the sender.</typeparam>
+    public class ByteChannel<TSender> : IChannel<Message<TSender>>, IDisposable
     {
-        private readonly Dictionary<T, MessageBuffer> _buffers = new Dictionary<T, MessageBuffer>();
-        private readonly IChannel<Message<T>> _channel;
+        private readonly Dictionary<TSender, MessageBuffer> _buffers = new Dictionary<TSender, MessageBuffer>();
+        private readonly PacketBuffer<TSender> _buffer;
         private bool _newUsers = true;
 
-        public ByteChannel(IDataPacket<T> packet)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ByteChannel{TSender}"/> class.
+        /// </summary>
+        /// <param name="packet">The data packet channel.</param>
+        public ByteChannel(IDataPacket<TSender> packet)
         {
-            this._channel =
-                new PacketBuffer<T>(
-                    new PacketChecker<T>(
-                        new PacketPadder<T>(
+            this._buffer =
+                new PacketBuffer<TSender>(
+                    new PacketChecker<TSender>(
+                        new PacketPadder<TSender>(
                             packet)));
 
-            this._channel.Receive += this._channel_Receive;
+            this._buffer.Receive += this._buffer_Receive;
 
             this.Reset();
         }
 
-        public event ReceiveCallback<Message<T>> Receive;
+        /// <summary>
+        /// Occurs when a message is received.
+        /// </summary>
+        public event ReceiveCallback<Message<TSender>> Receive;
 
+        /// <summary>
+        /// Sends the specified data.
+        /// </summary>
+        /// <param name="data">The data.</param>
         public void Send(byte[] data)
         {
             if (this._newUsers)
                 lock (this._buffers)
                     if (this._newUsers)
                         this.Reset();
-                    
-            this._channel.Send(
+
+            this._buffer.Send(
                 ByteHelper.Combine(
-                    ByteHelper.EncodeVarint(data.Length), 
+                    ByteHelper.EncodeVarint(data.Length),
                     data));
         }
 
+        /// <summary>
+        /// Queues a reset message. This function is automatically called whenever a new user is detected.
+        /// </summary>
         public void Reset()
         {
             this._newUsers = false;
-            this._channel.Send(new byte[0]);
+            this._buffer.Send(new byte[0]);
         }
 
+        /// <summary>
+        /// Clears the underlying queue and resets the channel.
+        /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
         public void Clear()
         {
             throw new NotImplementedException();
         }
 
-        public void RemoveSender(T sender)
+        /// <summary>
+        /// Removes the given sender's buffer. Use when a user logs off.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <exception cref="NotImplementedException"></exception>
+        public void RemoveSender(TSender sender)
         {
             throw new NotImplementedException();
         }
 
-        private void _channel_Receive(object sender, Message<T> e)
+        private void _buffer_Receive(object sender, Message<TSender> e)
         {
             MessageBuffer buff;
             lock (this._buffers)
@@ -82,7 +109,7 @@ namespace ByteChannel
                     var bytes = buff.CheckForMessages();
                     if (bytes != null)
                     {
-                        this.Receive?.Invoke(this, new Message<T>(e.Sender, e.IsOwnMessage, bytes));
+                        this.Receive?.Invoke(this, new Message<TSender>(e.Sender, e.IsOwnMessage, bytes));
                     }
                 }
             }
@@ -127,6 +154,7 @@ namespace ByteChannel
 
             public void Reset()
             {
+                this._bytePlace = 0;
                 this._length = 0;
                 this._receivedBytes.Clear();
                 this._state = ParseState.Header;
@@ -137,6 +165,11 @@ namespace ByteChannel
         {
             Header,
             Body
+        }
+
+        public void Dispose()
+        {
+            this._buffer.Dispose();
         }
     }
 }

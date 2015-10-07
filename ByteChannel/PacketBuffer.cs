@@ -4,19 +4,19 @@ using System.Linq;
 
 namespace ByteChannel
 {
-    internal class PacketBuffer<T> : IChannel<Message<T>>
+    internal class PacketBuffer<TSender> : IChannel<Message<TSender>>, IDisposable
     {
         private readonly object _lockObj = new object();
-        private readonly Dictionary<T, MessageBuffer> _buffers = new Dictionary<T, MessageBuffer>();
-        private readonly PacketChecker<T> _checker;
+        private readonly Dictionary<TSender, MessageBuffer> _buffers = new Dictionary<TSender, MessageBuffer>();
+        private readonly PacketChecker<TSender> _checker;
 
-        public PacketBuffer(PacketChecker<T> checker)
+        public PacketBuffer(PacketChecker<TSender> checker)
         {
             this._checker = checker;
             this._checker.Receive += this._checker_Receive;
         }
 
-        private void _checker_Receive(object sender, OrderedMessage<T> e)
+        private void _checker_Receive(object sender, OrderedMessage<TSender> e)
         {
             MessageBuffer buff;
             lock (this._buffers)
@@ -33,7 +33,7 @@ namespace ByteChannel
 
                 foreach (var bytes in  buff.Read())
                 {
-                    this.Receive?.Invoke(this, new Message<T>(e.Sender, e.IsOwnMessage, bytes));
+                    this.Receive?.Invoke(this, new Message<TSender>(e.Sender, e.IsOwnMessage, bytes));
                 }
             }
         }
@@ -53,14 +53,14 @@ namespace ByteChannel
             }
         }
 
-        public event ReceiveCallback<Message<T>> Receive;
+        public event ReceiveCallback<Message<TSender>> Receive;
 
         private class MessageBuffer
         {
-            private readonly byte[][] _buffer = new byte[Config.MaxQueueSize + 1][];
+            private readonly byte[][] _buffer = new byte[Config.MaxQueueSize][];
             private int _pointer = -1;
 
-            public void Set(OrderedMessage<T> message)
+            public void Set(OrderedMessage<TSender> message)
             {
                 this._buffer[message.Location] = message.Data;
 
@@ -73,7 +73,7 @@ namespace ByteChannel
                 if (this._pointer == -1) yield break;
                 for (;; this._pointer++)
                 {
-                    if (this._pointer > Config.MaxQueueSize)
+                    if (this._pointer == Config.MaxQueueSize)
                         this._pointer = 0;
 
                     var data = this._buffer[this._pointer];
@@ -84,6 +84,11 @@ namespace ByteChannel
                     yield return data;
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            this._checker.Dispose();
         }
     }
 }

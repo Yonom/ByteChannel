@@ -1,22 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace ByteChannel
 {
-    // TODO add timeout
-    internal class PacketChecker<T> : IChannel<OrderedMessage<T>>
+    internal class PacketChecker<TSender> : IChannel<OrderedMessage<TSender>>, IDisposable
     {
-        private readonly PacketPadder<T> _padder;
+        private readonly AutoResetEvent _timeoutResetEvent = new AutoResetEvent(true);
+        private readonly PacketPadder<TSender> _padder;
         private readonly Queue<byte[]> _sendQueue = new Queue<byte[]>();
         private readonly Queue<byte[]> _sentQueue = new Queue<byte[]>();
+        private readonly RegisteredWaitHandle _registration;
         private byte _pointer = 1;
 
-        public PacketChecker(PacketPadder<T> padder)
+        public PacketChecker(PacketPadder<TSender> padder)
         {
             this._padder = padder;
             this._padder.Receive += this._padder_Receive;
+            this._registration = this.RegisterSendTimeout();
         }
+
+        private RegisteredWaitHandle RegisterSendTimeout()
+        {
+            return ThreadPool.RegisterWaitForSingleObject(this._timeoutResetEvent, (state, timedOut) =>
+            {
+                if (!timedOut) return;
+                if (this._padder.IsBusy) return;
+                this.ResendMissed(null);
+            }, null, 500, false);
+        }
+
 
         public int MaxSize => this._padder.MaxSize - 1;
 
@@ -29,12 +43,14 @@ namespace ByteChannel
             }
         }
 
-        public event ReceiveCallback<OrderedMessage<T>> Receive;
+        public event ReceiveCallback<OrderedMessage<TSender>> Receive;
 
-        private void _padder_Receive(object sender, Message<T> e)
+        private void _padder_Receive(object sender, Message<TSender> e)
         {
             if (e.IsOwnMessage)
             {
+                this._timeoutResetEvent.Set();
+
                 this.ResendMissed(e.Data);
                 this.FlushBuffer();
             }
@@ -42,7 +58,7 @@ namespace ByteChannel
             var location = (byte) (e.Data[0] - Config.CounterOffset);
             var data = ByteHelper.CropArray(e.Data, 1);
             this.Receive?.Invoke(this,
-                new OrderedMessage<T>(
+                new OrderedMessage<TSender>(
                     e.Sender, e.IsOwnMessage,
                     location, data));
         }
@@ -51,7 +67,8 @@ namespace ByteChannel
         {
             lock (this._sentQueue)
             {
-                while (this._sentQueue.Any())
+                var count = this._sentQueue.Count;
+                while (count --> 0)
                 {
                     var item = this._sentQueue.Dequeue();
                     if (ByteHelper.UnsafeCompare(item, data)) break;
@@ -64,7 +81,7 @@ namespace ByteChannel
         {
             lock (this._sentQueue)
             {
-                while (this._sentQueue.Count < Config.MaxQueueSize && this._sendQueue.Any())
+                while (this._sentQueue.Count < Config.MaxConcurrency && this._sendQueue.Any())
                 {
                     this.SendInternal(ByteHelper.InsertByte(this.IncrementCounter(), this._sendQueue.Dequeue()));
                 }
@@ -73,6 +90,8 @@ namespace ByteChannel
 
         private void SendInternal(byte[] data)
         {
+            this._timeoutResetEvent.Set();
+
             this._sentQueue.Enqueue(data);
             this._padder.Send(data);
         }
@@ -83,6 +102,12 @@ namespace ByteChannel
                 this._pointer = Config.CounterOffset - 1;
 
             return ++this._pointer;
+        }
+
+        public void Dispose()
+        {
+            this._registration.Unregister(null);
+            this._timeoutResetEvent.Dispose();
         }
     }
 }

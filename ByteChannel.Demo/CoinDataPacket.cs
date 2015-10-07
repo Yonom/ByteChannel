@@ -1,6 +1,7 @@
 using System;
 using BotBits;
 using BotBits.Events;
+using BotBits.SendMessages;
 using BotCake;
 
 namespace ByteChannel.Demo
@@ -27,5 +28,6 @@ namespace ByteChannel.Demo
 
         public event ReceiveCallback<Message<Player>> Receive;
         public int Size { get; } = 16;
+        public bool IsBusy => CoinSendMessage.Of(this).Count > 0;
     }
 }

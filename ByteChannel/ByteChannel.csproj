@@ -31,6 +31,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Release\ByteChannel.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PlayerIOClient, Version=2.3.6.0, Culture=neutral, PublicKeyToken=c7f7b730653f6a44, processorArchitecture=MSIL">
@@ -49,6 +50,7 @@
   <ItemGroup>
     <Compile Include="ByteChannel.cs" />
     <Compile Include="ByteHelper.cs" />
+    <Compile Include="ChannelOptions.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="IChannel.cs" />
     <Compile Include="PacketBuffer.cs" />

@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading;
 using BotBits;
 using BotBits.Events;
 using BotCake;
@@ -13,12 +14,21 @@ namespace ByteChannel.Demo
         {
             var channel = new ByteChannel<Player>(new CoinDataPacket());
             channel.Receive += this.Channel_Receive;
-            channel.Send(Encoding.UTF8.GetBytes("Hello world!"));
+
+
+            ThreadPool.QueueUserWorkItem(o =>
+            {
+                while (true)
+                {
+                    channel.Send(Encoding.UTF8.GetBytes(Console.ReadLine()));
+                }
+            });
+
         }
 
         private void Channel_Receive(object sender, Message<Player> e)
         {
-            Console.WriteLine(Encoding.UTF8.GetString(e.Data));
+            Console.WriteLine(e.Sender.Username + " : " + Encoding.UTF8.GetString(e.Data));
         }
     }
 }

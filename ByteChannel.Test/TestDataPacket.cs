@@ -17,5 +17,6 @@ namespace ByteChannel.Test
 
         public event ReceiveCallback<Message<bool>> Receive;
         public int Size { get; }
+        public bool IsBusy { get; } = false;
     }
 }
