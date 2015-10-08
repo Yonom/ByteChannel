@@ -5,12 +5,12 @@ ByteChannel is a protocol to send bytes over an unreliable source reliably, whil
 
 ByteChannel is originally designed to operate in a game called EverybodyEdits, but with a few adjustments to the protocol, it could even be used to replace TCP!
 
-The protocol can be devided into 4 layers. These layers will be described in this document.
+The protocol can be divided into 4 layers. These layers will be described in this document.
 
 ## Layer 1
 The first layer works around the limitation that only a fixed amount of bytes can be embedded in EE messages. If packet sizes are not limited, the implementation of this layer can be skipped.
 
-Variable packet sizes is archived by simply padding the packet data with empty bytes. This also means that the first data byte must not be a zero byte. When decoding, all empty bytes from the start of a packet are stripped off of it.
+Variable packet sizes is archieved by simply padding the packet data with empty bytes. This also means that the first data byte must not be a zero byte. When decoding, all empty bytes from the start of a packet are stripped off of it.
 
 Example:
 Data:
@@ -49,5 +49,5 @@ Larger chunks of data can be transferred by splitting these into smaller parts t
 
 ## Layer 4
 Due to the fact that the protocol's messages are transmitted to multiple receivers in EE, some recipients might not be present from the start. This means that messages must be split in meaningful parts so that newly joined users can jump in and participate in the transmission!  
-ByteChannel allows the user of the protocol to request the transmission of a byte array. This the size of this byte array will be base128 encoded (little endian varint, see protobuf) and prepended to the byte array. This will be passed to layer 3 and eventually sent over the protocol.  
+ByteChannel allows the user of the protocol to request the transmission of a byte array. The size of this byte array is base-128 encoded (little endian varint, see protobuf) and prepended to the byte array. This will be passed to layer 3 and eventually sent over the protocol.  
 In addition to this, whenever the presence of a new user is detected, a reset message must be sent. This is just an empty layer 3 message, and marks the start of the next message. A reset message must not be sent if there is no sign of any new users, because of this, new users must at least send a reset message of their own when they join to announce that they support this protocol.  
