@@ -57,6 +57,7 @@ namespace ByteChannel
                 this.FlushBuffer();
             }
 
+            if (e.Data.Count == 0) return;
             var location = (byte) (e.Data.Array[e.Data.Offset] - Config.CounterOffset);
             var data = ByteHelper.CropArray(e.Data, 1);
             this.Receive?.Invoke(this,
