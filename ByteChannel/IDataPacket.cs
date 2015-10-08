@@ -4,7 +4,7 @@
     /// Represents a channel which connects ByteChannel to an external source.
     /// </summary>
     /// <typeparam name="TSender">The type of the sender.</typeparam>
-    public interface IDataPacket<TSender> : IChannel<Message<TSender>>
+    public interface IDataPacket<TSender> : IChannel<byte[], Message<TSender>>
     {
         /// <summary>
         /// Gets the size of bytes this channel requires.

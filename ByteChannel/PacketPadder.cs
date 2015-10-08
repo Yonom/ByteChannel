@@ -1,6 +1,8 @@
-﻿namespace ByteChannel
+﻿using System;
+
+namespace ByteChannel
 {
-    internal class PacketPadder<TSender> : IChannel<Message<TSender>>
+    internal class PacketPadder<TSender> : IChannel<byte[], SegmentMessage<TSender>>, IDisposable
     {
         private readonly IDataPacket<TSender> _packet;
 
@@ -18,13 +20,18 @@
             this._packet.Send(ByteHelper.AddTrail(data, this._packet.Size));
         }
 
-        public event ReceiveCallback<Message<TSender>> Receive;
+        public event ReceiveCallback<SegmentMessage<TSender>> Receive;
 
         private void _packet_Receive(object sender, Message<TSender> e)
         {
             this.Receive?.Invoke(this,
-                new Message<TSender>(e.Sender, e.IsOwnMessage,
+                new SegmentMessage<TSender>(e.Sender, e.IsOwnMessage,
                     ByteHelper.RemoveTrail(e.Data)));
+        }
+
+        public void Dispose()
+        {
+            this._packet.Receive -= this._packet_Receive;
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ByteChannel
 {
-    internal class PacketBuffer<TSender> : IChannel<Message<TSender>>, IDisposable
+    internal class PacketBuffer<TSender> : IChannel<byte[], SegmentMessage<TSender>>, IDisposable
     {
         private readonly object _lockObj = new object();
         private readonly Dictionary<TSender, MessageBuffer> _buffers = new Dictionary<TSender, MessageBuffer>();
@@ -31,9 +31,9 @@ namespace ByteChannel
             {
                 buff.Set(e);
 
-                foreach (var bytes in  buff.Read())
+                foreach (var bytes in buff.Read())
                 {
-                    this.Receive?.Invoke(this, new Message<TSender>(e.Sender, e.IsOwnMessage, bytes));
+                    this.Receive?.Invoke(this, new SegmentMessage<TSender>(e.Sender, e.IsOwnMessage, bytes));
                 }
             }
         }
@@ -44,7 +44,7 @@ namespace ByteChannel
             {
                 if (data.Length <= this._checker.MaxSize) // makes sure we send new byte[0]s too
                 {
-                    this._checker.Send(data);
+                    this._checker.Send(new ArraySegment<byte>(data));
                     return;
                 }
 
@@ -53,22 +53,22 @@ namespace ByteChannel
             }
         }
 
-        public event ReceiveCallback<Message<TSender>> Receive;
+        public event ReceiveCallback<SegmentMessage<TSender>> Receive;
 
         private class MessageBuffer
         {
-            private readonly byte[][] _buffer = new byte[Config.MaxQueueSize][];
+            private readonly ArraySegment<byte>?[] _buffer = new ArraySegment<byte>?[Config.MaxQueueSize];
             private int _pointer = -1;
 
             public void Set(OrderedMessage<TSender> message)
             {
                 this._buffer[message.Location] = message.Data;
 
-                if (this._pointer == -1 && !message.Data.Any())
+                if (this._pointer == -1 && message.Data.Count == 0)
                     this._pointer = message.Location;
             }
 
-            public IEnumerable<byte[]> Read()
+            public IEnumerable<ArraySegment<byte>> Read()
             {
                 if (this._pointer == -1) yield break;
                 for (;; this._pointer++)
@@ -81,7 +81,7 @@ namespace ByteChannel
                         yield break;
 
                     this._buffer[this._pointer] = null;
-                    yield return data;
+                    yield return data.Value;
                 }
             }
         }
@@ -89,6 +89,7 @@ namespace ByteChannel
         public void Dispose()
         {
             this._checker.Dispose();
+            this._buffers.Clear();
         }
     }
 }

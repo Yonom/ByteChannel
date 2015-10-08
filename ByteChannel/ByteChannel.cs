@@ -8,7 +8,7 @@ namespace ByteChannel
     /// Represents a channel through which bytes can be sent.
     /// </summary>
     /// <typeparam name="TSender">The type of the sender.</typeparam>
-    public class ByteChannel<TSender> : IChannel<Message<TSender>>, IDisposable
+    public class ByteChannel<TSender> : IChannel<byte[], Message<TSender>>, IDisposable
     {
         private readonly Dictionary<TSender, MessageBuffer> _buffers = new Dictionary<TSender, MessageBuffer>();
         private readonly PacketBuffer<TSender> _buffer;
@@ -18,13 +18,23 @@ namespace ByteChannel
         /// Initializes a new instance of the <see cref="ByteChannel{TSender}"/> class.
         /// </summary>
         /// <param name="packet">The data packet channel.</param>
-        public ByteChannel(IDataPacket<TSender> packet)
+        public ByteChannel(IDataPacket<TSender> packet) 
+            : this(packet, ChannelOptions.Default)
+        {
+            
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ByteChannel{TSender}" /> class.
+        /// </summary>
+        /// <param name="packet">The data packet channel.</param>
+        /// <param name="options">The options.</param>
+        public ByteChannel(IDataPacket<TSender> packet, ChannelOptions options)
         {
             this._buffer =
                 new PacketBuffer<TSender>(
                     new PacketChecker<TSender>(
-                        new PacketPadder<TSender>(
-                            packet)));
+                        new PacketPadder<TSender>(packet), options));
 
             this._buffer.Receive += this._buffer_Receive;
 
@@ -63,15 +73,6 @@ namespace ByteChannel
         }
 
         /// <summary>
-        /// Clears the underlying queue and resets the channel.
-        /// </summary>
-        /// <exception cref="NotImplementedException"></exception>
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
         /// Removes the given sender's buffer. Use when a user logs off.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -81,14 +82,14 @@ namespace ByteChannel
             throw new NotImplementedException();
         }
 
-        private void _buffer_Receive(object sender, Message<TSender> e)
+        private void _buffer_Receive(object sender, SegmentMessage<TSender> e)
         {
             MessageBuffer buff;
             lock (this._buffers)
             {
                 if (!this._buffers.TryGetValue(e.Sender, out buff))
                 {
-                    if (e.Data.Any()) return;
+                    if (e.Data.Count > 0) return;
                     this._newUsers = true;
                     this._buffers.Add(e.Sender, buff = new MessageBuffer());
                 }
@@ -96,15 +97,15 @@ namespace ByteChannel
 
             lock (buff)
             {
-                if (!e.Data.Any())
+                if (e.Data.Count == 0)
                 {
                     buff.Reset();
                     return;
                 }
 
-                foreach (var b in e.Data)
+                for (var i = e.Data.Offset; i < e.Data.Offset + e.Data.Count; i++)
                 {
-                    buff.AddByte(b);
+                    buff.AddByte(e.Data.Array[i]);
 
                     var bytes = buff.CheckForMessages();
                     if (bytes != null)
@@ -117,7 +118,7 @@ namespace ByteChannel
 
         private class MessageBuffer
         {
-            private readonly List<byte> _receivedBytes = new List<byte>();
+            private List<byte> _receivedBytes;
             private int _length;
             private ParseState _state;
             private int _bytePlace;
@@ -129,7 +130,10 @@ namespace ByteChannel
                     case ParseState.Header:
                         this._length |= (b & 0x7f) << (7 * this._bytePlace++);
                         if ((b & 0x80) != 0x80)
+                        {
                             this._state = ParseState.Body;
+                            this._receivedBytes = new List<byte>(Math.Max(this._length, ushort.MaxValue));
+                        }
                         break;
                     case ParseState.Body:
                         this._receivedBytes.Add(b);
@@ -156,7 +160,7 @@ namespace ByteChannel
             {
                 this._bytePlace = 0;
                 this._length = 0;
-                this._receivedBytes.Clear();
+                this._receivedBytes = null;
                 this._state = ParseState.Header;
             }
         }
@@ -166,7 +170,7 @@ namespace ByteChannel
             Header,
             Body
         }
-
+        
         public void Dispose()
         {
             this._buffer.Dispose();

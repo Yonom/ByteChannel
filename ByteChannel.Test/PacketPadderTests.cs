@@ -12,7 +12,7 @@ namespace ByteChannel.Test
             var data = new byte[] {1, 2, 3, 4, 5};
             byte[] received = null;
 
-            padder.Receive += (sender, message) => received = message.Data;
+            padder.Receive += (sender, message) => received = message.Data.ToArray();
             padder.Send(data);
 
             CollectionAssert.AreEqual(data, received);

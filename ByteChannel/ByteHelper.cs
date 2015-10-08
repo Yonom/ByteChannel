@@ -52,86 +52,65 @@ namespace ByteChannel
 
         public static byte[] AddTrail(byte[] data, int size)
         {
+            if (size == data.Length) return data;
+
             var temp = new byte[size];
             Buffer.BlockCopy(data, 0, temp, size - data.Length, data.Length);
             return temp;
         }
 
-        public static byte[] RemoveTrail(byte[] data)
+        public static ArraySegment<byte> RemoveTrail(byte[] data)
         {
             var i = 0;
             while (i < data.Length && data[i] == 0) ++i;
             return CropArray(data, i);
         }
 
-        public static byte[] CropArray(byte[] data, int toRemove)
+        public static ArraySegment<byte> CropArray(byte[] data, int toRemove)
         {
-            var temp = new byte[data.Length - toRemove];
-            Buffer.BlockCopy(data, toRemove, temp, 0, data.Length - toRemove);
-            return temp;
+            return new ArraySegment<byte>(data, toRemove, data.Length - toRemove);
         }
 
-        public static byte[] InsertByte(byte newByte, byte[] data)
+        public static ArraySegment<byte> CropArray(ArraySegment<byte> data, int toRemove)
         {
-            var temp = new byte[data.Length + 1];
+            return new ArraySegment<byte>(data.Array, data.Offset + toRemove, data.Count - toRemove);
+        }
+
+        public static byte[] InsertByte(byte newByte, ArraySegment<byte> data)
+        {
+            var temp = new byte[data.Count + 1];
             temp[0] = newByte;
-            Buffer.BlockCopy(data, 0, temp, 1, data.Length);
+            Buffer.BlockCopy(data.Array, data.Offset, temp, 1, data.Count);
             return temp;
         }
 
-        // Copyright (c) 2008-2013 Hafthor Stefansson
-        // Distributed under the MIT/X11 software license
-        // Ref: http://www.opensource.org/licenses/mit-license.php.
-        public static unsafe bool UnsafeCompare(byte[] a1, byte[] a2)
+        public static bool Compare(byte[] a1, ArraySegment<byte> a2)
         {
-            if (a1 == null || a2 == null || a1.Length != a2.Length)
-                return false;
-            fixed (byte* p1 = a1, p2 = a2)
+            if (a1.Length != a2.Count) return false;
+            for (var i = 0; i < a1.Length; i++)
             {
-                byte* x1 = p1, x2 = p2;
-                var l = a1.Length;
-                for (var i = 0; i < l/8; i++, x1 += 8, x2 += 8)
-                    if (*((long*) x1) != *((long*) x2)) return false;
-                if ((l & 4) != 0)
+                if (a1[i] != a2.Array[i + a2.Offset])
                 {
-                    if (*((int*) x1) != *((int*) x2)) return false;
-                    x1 += 4;
-                    x2 += 4;
+                    return false;
                 }
-                if ((l & 2) != 0)
-                {
-                    if (*((short*) x1) != *((short*) x2)) return false;
-                    x1 += 2;
-                    x2 += 2;
-                }
-                if ((l & 1) != 0) if (*x1 != *x2) return false;
-                return true;
             }
+            return true;
         }
 
-        public static T[] CopySlice<T>(this T[] source, int index, int length, bool padToLength = false)
+        public static ArraySegment<T> CreateSlice<T>(this T[] source, int index, int length)
         {
-            int n = length;
-            T[] slice = null;
+            var n = length;
 
             if (source.Length < index + length)
-            {
                 n = source.Length - index;
-                if (padToLength)
-                {
-                    slice = new T[length];
-                }
-            }
-
-            if (slice == null) slice = new T[n];
-            Array.Copy(source, index, slice, 0, n);
-            return slice;
+           
+            return new ArraySegment<T>(source, index, n);
         }
 
-        public static IEnumerable<T[]> Slices<T>(this T[] source, int count, bool padToLength = false)
+        public static IEnumerable<ArraySegment<T>> Slices<T>(this T[] source, int count)
         {
             for (var i = 0; i < source.Length; i += count)
-                yield return source.CopySlice(i, count, padToLength);
+                yield return source.CreateSlice(i, count);
         }
     }
 }

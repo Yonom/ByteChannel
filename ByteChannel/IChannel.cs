@@ -3,17 +3,18 @@
     /// <summary>
     /// Represents a byte array channel.
     /// </summary>
-    /// <typeparam name="T">The type of receive messages.</typeparam>
-    public interface IChannel<out T>
+    /// <typeparam name="TInput">The type of the input.</typeparam>
+    /// <typeparam name="TOutput">The type of the output.</typeparam>
+    public interface IChannel<in TInput, out TOutput>
     {
         /// <summary>
         /// Sends the specified data.
         /// </summary>
         /// <param name="data">The data.</param>
-        void Send(byte[] data);
+        void Send(TInput data);
         /// <summary>
         /// Occurs when data is received.
         /// </summary>
-        event ReceiveCallback<T> Receive;
+        event ReceiveCallback<TOutput> Receive;
     }
 }

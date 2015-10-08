@@ -5,36 +5,38 @@ using System.Threading;
 
 namespace ByteChannel
 {
-    internal class PacketChecker<TSender> : IChannel<OrderedMessage<TSender>>, IDisposable
+    internal class PacketChecker<TSender> : IChannel<ArraySegment<byte>, OrderedMessage<TSender>>, IDisposable
     {
         private readonly AutoResetEvent _timeoutResetEvent = new AutoResetEvent(true);
         private readonly PacketPadder<TSender> _padder;
-        private readonly Queue<byte[]> _sendQueue = new Queue<byte[]>();
+        private readonly Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
         private readonly Queue<byte[]> _sentQueue = new Queue<byte[]>();
         private readonly RegisteredWaitHandle _registration;
-        private byte _pointer = 1;
+        private readonly int _maxConcurrency;
+        private byte _pointer;
 
-        public PacketChecker(PacketPadder<TSender> padder)
+        public PacketChecker(PacketPadder<TSender> padder, ChannelOptions options)
         {
+            this._maxConcurrency = options.MaximumConcurrency;
             this._padder = padder;
             this._padder.Receive += this._padder_Receive;
-            this._registration = this.RegisterSendTimeout();
+            this._registration = this.RegisterSendTimeout(options.WaitTimeout);
         }
 
-        private RegisteredWaitHandle RegisterSendTimeout()
+        private RegisteredWaitHandle RegisterSendTimeout(TimeSpan timeout)
         {
             return ThreadPool.RegisterWaitForSingleObject(this._timeoutResetEvent, (state, timedOut) =>
             {
                 if (!timedOut) return;
                 if (this._padder.IsBusy) return;
-                this.ResendMissed(null);
-            }, null, 500, false);
+                this.ResendMissed(default(ArraySegment<byte>));
+            }, null, timeout, false);
         }
 
 
         public int MaxSize => this._padder.MaxSize - 1;
 
-        public void Send(byte[] data)
+        public void Send(ArraySegment<byte> data)
         {
             lock (this._sentQueue)
             {
@@ -45,7 +47,7 @@ namespace ByteChannel
 
         public event ReceiveCallback<OrderedMessage<TSender>> Receive;
 
-        private void _padder_Receive(object sender, Message<TSender> e)
+        private void _padder_Receive(object sender, SegmentMessage<TSender> e)
         {
             if (e.IsOwnMessage)
             {
@@ -55,7 +57,7 @@ namespace ByteChannel
                 this.FlushBuffer();
             }
 
-            var location = (byte) (e.Data[0] - Config.CounterOffset);
+            var location = (byte) (e.Data.Array[e.Data.Offset] - Config.CounterOffset);
             var data = ByteHelper.CropArray(e.Data, 1);
             this.Receive?.Invoke(this,
                 new OrderedMessage<TSender>(
@@ -63,7 +65,7 @@ namespace ByteChannel
                     location, data));
         }
 
-        private void ResendMissed(byte[] data)
+        private void ResendMissed(ArraySegment<byte> data)
         {
             lock (this._sentQueue)
             {
@@ -71,7 +73,7 @@ namespace ByteChannel
                 while (count --> 0)
                 {
                     var item = this._sentQueue.Dequeue();
-                    if (ByteHelper.UnsafeCompare(item, data)) break;
+                    if (ByteHelper.Compare(item, data)) break;
                     this.SendInternal(item);
                 }
             }
@@ -81,7 +83,7 @@ namespace ByteChannel
         {
             lock (this._sentQueue)
             {
-                while (this._sentQueue.Count < Config.MaxConcurrency && this._sendQueue.Any())
+                while (this._sentQueue.Count < this._maxConcurrency && this._sendQueue.Any())
                 {
                     this.SendInternal(ByteHelper.InsertByte(this.IncrementCounter(), this._sendQueue.Dequeue()));
                 }
@@ -106,8 +108,13 @@ namespace ByteChannel
 
         public void Dispose()
         {
+            this._padder.Dispose();
+
             this._registration.Unregister(null);
             this._timeoutResetEvent.Dispose();
+
+            this._sentQueue.Clear();
+            this._sendQueue.Clear();
         }
     }
 }
