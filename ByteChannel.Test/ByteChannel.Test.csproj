@@ -35,10 +35,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="PlayerIOClient, Version=2.3.6.0, Culture=neutral, PublicKeyToken=c7f7b730653f6a44, processorArchitecture=MSIL">
-      <HintPath>..\packages\PlayerIOClient-Signed.3.2.369\lib\PlayerIOClient.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -64,18 +60,15 @@
     <Compile Include="PacketCheckerTests.cs" />
     <Compile Include="PacketPadderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestDataPacket.cs" />
+    <Compile Include="TestChannel.cs" />
     <Compile Include="TestDataPacketTests.cs" />
-    <Compile Include="UnstableTestDataPacket.cs" />
+    <Compile Include="UnstableTestChannel.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ByteChannel\ByteChannel.csproj">
       <Project>{3158ecc9-b5eb-4767-adb3-9497da138368}</Project>
       <Name>ByteChannel</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

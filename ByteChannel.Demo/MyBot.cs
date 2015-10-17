@@ -12,7 +12,7 @@ namespace ByteChannel.Demo
         [EventListener]
         public void On(JoinCompleteEvent e)
         {
-            var channel = new ByteChannel<Player>(new CoinDataPacket());
+            var channel = new ByteChannel<Player>(new CoinChannel());
             channel.Receive += this.Channel_Receive;
 
 
@@ -28,7 +28,7 @@ namespace ByteChannel.Demo
 
         private void Channel_Receive(object sender, Message<Player> e)
         {
-            Console.WriteLine(e.Sender.Username + " : " + Encoding.UTF8.GetString(e.Data));
+            Console.WriteLine(e.Sender.Username + ": " + Encoding.UTF8.GetString(e.Data));
         }
     }
 }

@@ -9,7 +9,7 @@ namespace ByteChannel.Test
         [TestMethod]
         public void InvalidDataTest()
         {
-            var packet = new TestDataPacket(16);
+            var packet = new TestChannel(16);
 
             try
             {
@@ -24,7 +24,7 @@ namespace ByteChannel.Test
         [TestMethod]
         public void ReceiveTest()
         {
-            var packet = new TestDataPacket(16);
+            var packet = new TestChannel(16);
             var received = false;
 
             packet.Receive += (sender, message) => received = true;

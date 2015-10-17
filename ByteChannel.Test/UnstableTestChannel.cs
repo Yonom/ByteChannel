@@ -5,9 +5,9 @@ using System.Text;
 
 namespace ByteChannel.Test
 {
-    internal class UnstableTestDataPacket : TestDataPacket
+    internal class UnstableTestChannel : TestChannel
     {
-        public UnstableTestDataPacket(int size) : base(size)
+        public UnstableTestChannel(int size) : base(size)
         {
         }
 

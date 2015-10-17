@@ -4,9 +4,9 @@ namespace ByteChannel
 {
     internal class PacketPadder<TSender> : IChannel<byte[], SegmentMessage<TSender>>, IDisposable
     {
-        private readonly IDataPacket<TSender> _packet;
+        private readonly INetworkChannel<TSender> _packet;
 
-        public PacketPadder(IDataPacket<TSender> packet)
+        public PacketPadder(INetworkChannel<TSender> packet)
         {
             this._packet = packet;
             this._packet.Receive += this._packet_Receive;
@@ -20,7 +20,7 @@ namespace ByteChannel
             this._packet.Send(ByteHelper.AddTrail(data, this._packet.Size));
         }
 
-        public event ReceiveCallback<SegmentMessage<TSender>> Receive;
+        public event ChannelCallback<SegmentMessage<TSender>> Receive;
 
         private void _packet_Receive(object sender, Message<TSender> e)
         {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ByteChannel
 {
@@ -8,7 +7,7 @@ namespace ByteChannel
     /// Represents a channel through which bytes can be sent.
     /// </summary>
     /// <typeparam name="TSender">The type of the sender.</typeparam>
-    public class ByteChannel<TSender> : IChannel<byte[], Message<TSender>>, IDisposable
+    public class ByteChannel<TSender> : IByteChannel<TSender>, IDisposable
     {
         private readonly Dictionary<TSender, MessageBuffer> _buffers = new Dictionary<TSender, MessageBuffer>();
         private readonly PacketBuffer<TSender> _buffer;
@@ -18,8 +17,8 @@ namespace ByteChannel
         /// Initializes a new instance of the <see cref="ByteChannel{TSender}"/> class.
         /// </summary>
         /// <param name="packet">The data packet channel.</param>
-        public ByteChannel(IDataPacket<TSender> packet) 
-            : this(packet, ChannelOptions.Default)
+        public ByteChannel(INetworkChannel<TSender> packet) 
+            : this(packet, ByteChannelOptions.Default)
         {
             
         }
@@ -29,7 +28,7 @@ namespace ByteChannel
         /// </summary>
         /// <param name="packet">The data packet channel.</param>
         /// <param name="options">The options.</param>
-        public ByteChannel(IDataPacket<TSender> packet, ChannelOptions options)
+        public ByteChannel(INetworkChannel<TSender> packet, ByteChannelOptions options)
         {
             this._buffer =
                 new PacketBuffer<TSender>(
@@ -44,7 +43,18 @@ namespace ByteChannel
         /// <summary>
         /// Occurs when a message is received.
         /// </summary>
-        public event ReceiveCallback<Message<TSender>> Receive;
+        public event ChannelCallback<Message<TSender>> Receive;
+
+
+        /// <summary>
+        /// Occurs when a sender is removed.
+        /// </summary>
+        public event ChannelCallback<TSender> RemovedSender;
+
+        /// <summary>
+        /// Occurs when a sender is discovered.
+        /// </summary>
+        public event ChannelCallback<TSender> DiscoverSender;
 
         /// <summary>
         /// Sends the specified data.
@@ -73,27 +83,33 @@ namespace ByteChannel
         }
 
         /// <summary>
-        /// Removes the given sender's buffer. Use when a user logs off.
+        /// Removes the given sender's buffer. Use when a user logs off to free memory.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <exception cref="NotImplementedException"></exception>
         public void RemoveSender(TSender sender)
         {
-            throw new NotImplementedException();
+            lock (this._buffers) this._buffers.Remove(sender);
+            this._buffer.RemoveSender(sender);
+
+            this.RemovedSender?.Invoke(this, sender);
         }
 
         private void _buffer_Receive(object sender, SegmentMessage<TSender> e)
         {
+            bool newUser = false;
             MessageBuffer buff;
             lock (this._buffers)
             {
                 if (!this._buffers.TryGetValue(e.Sender, out buff))
                 {
                     if (e.Data.Count > 0) return;
-                    this._newUsers = true;
+                    this._newUsers = newUser = true;
                     this._buffers.Add(e.Sender, buff = new MessageBuffer());
                 }
             }
+
+            if (newUser) this.DiscoverSender?.Invoke(this, e.Sender);
 
             lock (buff)
             {
@@ -170,7 +186,10 @@ namespace ByteChannel
             Header,
             Body
         }
-        
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
         public void Dispose()
         {
             this._buffer.Dispose();

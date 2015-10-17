@@ -12,7 +12,7 @@ namespace ByteChannel.Test
         [TestMethod]
         public void MessageTest()
         {
-            var channel =new ByteChannel<bool>(new UnstableTestDataPacket(2));
+            var channel =new ByteChannel<bool>(new UnstableTestChannel(2));
             var data = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
             byte[] received = new byte[0];
 
@@ -25,7 +25,7 @@ namespace ByteChannel.Test
         [TestMethod]
         public void LotsOfMessagesTest()
         {
-            var channel = new ByteChannel<bool>(new UnstableTestDataPacket(16));
+            var channel = new ByteChannel<bool>(new UnstableTestChannel(16));
             byte[] received = new byte[0];
 
             channel.Receive += (sender, message) => received = ByteHelper.Combine(received, message.Data);

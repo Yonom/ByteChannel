@@ -16,8 +16,8 @@ namespace ByteChannel.Test
             var buffer =
                 new PacketBuffer<bool>(
                     new PacketChecker<bool>(
-                        new PacketPadder<bool>(new UnstableTestDataPacket(2)),
-                        ChannelOptions.Default));
+                        new PacketPadder<bool>(new UnstableTestChannel(2)),
+                        ByteChannelOptions.Default));
             var data = new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
             byte[] received = new byte[0];
 

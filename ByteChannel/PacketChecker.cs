@@ -15,7 +15,7 @@ namespace ByteChannel
         private readonly int _maxConcurrency;
         private byte _pointer;
 
-        public PacketChecker(PacketPadder<TSender> padder, ChannelOptions options)
+        public PacketChecker(PacketPadder<TSender> padder, ByteChannelOptions options)
         {
             this._maxConcurrency = options.MaximumConcurrency;
             this._padder = padder;
@@ -45,7 +45,7 @@ namespace ByteChannel
             }
         }
 
-        public event ReceiveCallback<OrderedMessage<TSender>> Receive;
+        public event ChannelCallback<OrderedMessage<TSender>> Receive;
 
         private void _padder_Receive(object sender, SegmentMessage<TSender> e)
         {

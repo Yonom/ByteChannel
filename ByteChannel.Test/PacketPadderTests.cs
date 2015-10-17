@@ -8,7 +8,7 @@ namespace ByteChannel.Test
         [TestMethod]
         public void PadTest()
         {
-            var padder = new PacketPadder<bool>(new TestDataPacket(16));
+            var padder = new PacketPadder<bool>(new TestChannel(16));
             var data = new byte[] {1, 2, 3, 4, 5};
             byte[] received = null;
 

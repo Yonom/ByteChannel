@@ -42,7 +42,7 @@ namespace ByteChannel
         {
             lock (this._lockObj)
             {
-                if (data.Length <= this._checker.MaxSize) // makes sure we send new byte[0]s too
+                if (data.Length <= this._checker.MaxSize) // makes sure we send byte[0]s too
                 {
                     this._checker.Send(new ArraySegment<byte>(data));
                     return;
@@ -53,7 +53,12 @@ namespace ByteChannel
             }
         }
 
-        public event ReceiveCallback<SegmentMessage<TSender>> Receive;
+        public void RemoveSender(TSender sender)
+        {
+            lock (this._buffers) this._buffers.Remove(sender);
+        }
+
+        public event ChannelCallback<SegmentMessage<TSender>> Receive;
 
         private class MessageBuffer
         {

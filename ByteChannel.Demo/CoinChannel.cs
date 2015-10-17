@@ -6,7 +6,7 @@ using BotCake;
 
 namespace ByteChannel.Demo
 {
-    class CoinDataPacket : BotBase, IDataPacket<Player>
+    class CoinChannel : BotBase, INetworkChannel<Player>
     {
         public void Send(byte[] data)
         {
@@ -26,7 +26,7 @@ namespace ByteChannel.Demo
             this.Receive?.Invoke(this, new Message<Player>(e.Player, e.Player == this.Players.OwnPlayer, bytes));
         }
 
-        public event ReceiveCallback<Message<Player>> Receive;
+        public event ChannelCallback<Message<Player>> Receive;
         public int Size { get; } = 16;
         public bool IsBusy => CoinSendMessage.Of(this).Count > 0;
     }

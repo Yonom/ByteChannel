@@ -9,6 +9,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByteChannel.Test", "ByteCha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByteChannel.Demo", "ByteChannel.Demo\ByteChannel.Demo.csproj", "{B2E92488-8C5B-44CA-864C-D952E21792BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByteProtocol", "ByteProtocol\ByteProtocol.csproj", "{D898E93A-6958-4705-894D-832623F0434F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByteProtocol.Demo", "ByteProtocol.Demo\ByteProtocol.Demo.csproj", "{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +30,14 @@ Global
 		{B2E92488-8C5B-44CA-864C-D952E21792BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B2E92488-8C5B-44CA-864C-D952E21792BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B2E92488-8C5B-44CA-864C-D952E21792BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D898E93A-6958-4705-894D-832623F0434F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D898E93A-6958-4705-894D-832623F0434F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D898E93A-6958-4705-894D-832623F0434F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D898E93A-6958-4705-894D-832623F0434F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

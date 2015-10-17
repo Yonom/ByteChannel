@@ -15,6 +15,6 @@
         /// <summary>
         /// Occurs when data is received.
         /// </summary>
-        event ReceiveCallback<TOutput> Receive;
+        event ChannelCallback<TOutput> Receive;
     }
 }

@@ -2,9 +2,9 @@
 
 namespace ByteChannel.Test
 {
-    internal class TestDataPacket : IDataPacket<bool>
+    internal class TestChannel : INetworkChannel<bool>
     {
-        public TestDataPacket(int size)
+        public TestChannel(int size)
         {
             this.Size = size;
         }
@@ -15,7 +15,7 @@ namespace ByteChannel.Test
             this.Receive?.Invoke(this, new Message<bool>(true, true, data));
         }
 
-        public event ReceiveCallback<Message<bool>> Receive;
+        public event ChannelCallback<Message<bool>> Receive;
         public int Size { get; }
         public bool IsBusy { get; } = false;
     }
