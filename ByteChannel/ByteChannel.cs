@@ -7,7 +7,7 @@ namespace ByteChannel
     /// Represents a channel through which bytes can be sent.
     /// </summary>
     /// <typeparam name="TSender">The type of the sender.</typeparam>
-    public class ByteChannel<TSender> : IByteChannel<TSender>, IDisposable
+    public class ByteChannel<TSender> : IMessageChannel<TSender>, IDisposable
     {
         private readonly Dictionary<TSender, MessageBuffer> _buffers = new Dictionary<TSender, MessageBuffer>();
         private readonly PacketBuffer<TSender> _buffer;
@@ -16,9 +16,9 @@ namespace ByteChannel
         /// <summary>
         /// Initializes a new instance of the <see cref="ByteChannel{TSender}"/> class.
         /// </summary>
-        /// <param name="packet">The data packet channel.</param>
-        public ByteChannel(INetworkChannel<TSender> packet) 
-            : this(packet, ByteChannelOptions.Default)
+        /// <param name="innerChannel">The inner network channel.</param>
+        public ByteChannel(INetworkChannel<TSender> innerChannel) 
+            : this(innerChannel, ByteChannelOptions.Default)
         {
             
         }
@@ -26,18 +26,27 @@ namespace ByteChannel
         /// <summary>
         /// Initializes a new instance of the <see cref="ByteChannel{TSender}" /> class.
         /// </summary>
-        /// <param name="packet">The data packet channel.</param>
+        /// <param name="innerChannel">The inner network channel.</param>
         /// <param name="options">The options.</param>
-        public ByteChannel(INetworkChannel<TSender> packet, ByteChannelOptions options)
+        public ByteChannel(INetworkChannel<TSender> innerChannel, ByteChannelOptions options)
         {
             this._buffer =
                 new PacketBuffer<TSender>(
                     new PacketChecker<TSender>(
-                        new PacketPadder<TSender>(packet), options));
+                        new PacketPadder<TSender>(innerChannel), options));
 
             this._buffer.Receive += this._buffer_Receive;
 
             this.Reset();
+        }
+
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        public void Dispose()
+        {
+            this._buffer.Dispose();
+            this._buffer.Receive -= this._buffer_Receive;
         }
 
         /// <summary>
@@ -104,7 +113,8 @@ namespace ByteChannel
                 if (!this._buffers.TryGetValue(e.Sender, out buff))
                 {
                     if (e.Data.Count > 0) return;
-                    this._newUsers = newUser = true;
+                    newUser = true;
+                    if (!e.IsOwnMessage) this._newUsers = true;
                     this._buffers.Add(e.Sender, buff = new MessageBuffer());
                 }
             }
@@ -148,7 +158,7 @@ namespace ByteChannel
                         if ((b & 0x80) != 0x80)
                         {
                             this._state = ParseState.Body;
-                            this._receivedBytes = new List<byte>(Math.Max(this._length, ushort.MaxValue));
+                            this._receivedBytes = new List<byte>(Math.Max(0, Math.Min(this._length, ushort.MaxValue)));
                         }
                         break;
                     case ParseState.Body:
@@ -185,14 +195,6 @@ namespace ByteChannel
         {
             Header,
             Body
-        }
-
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        public void Dispose()
-        {
-            this._buffer.Dispose();
         }
     }
 }

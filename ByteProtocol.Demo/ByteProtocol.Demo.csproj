@@ -32,10 +32,12 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BotBits, Version=1.0.0.0, Culture=neutral, PublicKeyToken=8d4a7b115348c43d, processorArchitecture=MSIL">
-      <HintPath>..\packages\BotBits.1.6.0-beta7\lib\net40\BotBits.dll</HintPath>
+      <HintPath>..\packages\BotBits.1.6.0-beta8\lib\net40\BotBits.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="BotBits.Commands, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -62,6 +64,7 @@
     <Compile Include="Chat.cs" />
     <Compile Include="ChatChannel.cs" />
     <Compile Include="CoinChannel.cs" />
+    <Compile Include="CompressionChannel.cs" />
     <Compile Include="MyBot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

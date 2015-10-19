@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -25,14 +23,6 @@ namespace ByteChannel.Test
                 checker.Send(bytes);
 
             CollectionAssert.AreEqual(data, received);
-        }
-    }
-
-    public static class ArraySegmentExtensions
-    {
-        public static T[] ToArray<T>(this ArraySegment<T> arraySegment)
-        {
-            return arraySegment.Array.Skip(arraySegment.Offset).Take(arraySegment.Count).ToArray();
         }
     }
 }

@@ -2,7 +2,7 @@ using ByteChannel;
 
 namespace ByteProtocol
 {
-    internal sealed class ProtocolChannel<TSender> : IByteChannel<TSender>
+    internal sealed class ProtocolChannel<TSender> : IMessageChannel<TSender>
     {
         private readonly ByteProtocol<TSender> _protocol;
         public byte Id { get; }

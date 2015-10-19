@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using ByteChannel;
@@ -6,10 +7,10 @@ namespace ByteProtocol
 {
     internal class ByteProtocolChannel<TSender>
     {
-        private readonly IByteChannel<TSender> _channel;
+        private readonly IMessageChannel<TSender> _channel;
         private readonly Dictionary<TSender, ProtocolMap> _users = new Dictionary<TSender, ProtocolMap>();
 
-        public ByteProtocolChannel(IByteChannel<TSender> channel)
+        public ByteProtocolChannel(IMessageChannel<TSender> channel)
         {
             this._channel = channel;
             this._channel.Receive += this._channel_Receive;
@@ -65,11 +66,25 @@ namespace ByteProtocol
                     this._users.Add(e.Sender, map = new ProtocolMap());
                 }
             }
+
             var m = ByteProtocolMessage.ParseMessage(e.Data);
-            if (map.Set(m.Id, m.Name))
-                this.ProtocolDiscovered?.Invoke(this, new KeyValuePair<TSender, string>(e.Sender, m.Name));
+
+            // ReSharper disable once AssignmentInConditionalExpression
+            lock (map)
+            {
+                bool changed;
+                var old = map.Get(m.Id);
+                if (m.Name == string.Empty)
+                    changed = map.Remove(m.Id);
+                else if (changed = map.Set(m.Id, m.Name))
+                    this.ProtocolDiscovered?.Invoke(this, new KeyValuePair<Message<TSender>, string>(e, m.Name));
+
+                if (changed && old != null)
+                    this.ProtocolDeleted?.Invoke(this, new KeyValuePair<Message<TSender>, string>(e, old));
+            }
         }
 
-        public event ChannelCallback<KeyValuePair<TSender, string>> ProtocolDiscovered;
+        public event ChannelCallback<KeyValuePair<Message<TSender>, string>> ProtocolDiscovered;
+        public event ChannelCallback<KeyValuePair<Message<TSender>, string>> ProtocolDeleted;
     }
 }

@@ -4,34 +4,34 @@ namespace ByteChannel
 {
     internal class PacketPadder<TSender> : IChannel<byte[], SegmentMessage<TSender>>, IDisposable
     {
-        private readonly INetworkChannel<TSender> _packet;
+        private readonly INetworkChannel<TSender> _networkChannel;
 
-        public PacketPadder(INetworkChannel<TSender> packet)
+        public PacketPadder(INetworkChannel<TSender> networkChannel)
         {
-            this._packet = packet;
-            this._packet.Receive += this._packet_Receive;
-        }
-
-        public int MaxSize => this._packet.Size;
-        public bool IsBusy => this._packet.IsBusy;
-
-        public void Send(byte[] data)
-        {
-            this._packet.Send(ByteHelper.AddTrail(data, this._packet.Size));
-        }
-
-        public event ChannelCallback<SegmentMessage<TSender>> Receive;
-
-        private void _packet_Receive(object sender, Message<TSender> e)
-        {
-            this.Receive?.Invoke(this,
-                new SegmentMessage<TSender>(e.Sender, e.IsOwnMessage,
-                    ByteHelper.RemoveTrail(e.Data)));
+            this._networkChannel = networkChannel;
+            this._networkChannel.Receive += this._networkChannel_Receive;
         }
 
         public void Dispose()
         {
-            this._packet.Receive -= this._packet_Receive;
+            this._networkChannel.Receive -= this._networkChannel_Receive;
+        }
+
+        public int MaxSize => this._networkChannel.Size;
+        public bool IsBusy => this._networkChannel.IsBusy;
+
+        public void Send(byte[] data)
+        {
+            this._networkChannel.Send(ByteHelper.AddTrail(data, this._networkChannel.Size));
+        }
+
+        public event ChannelCallback<SegmentMessage<TSender>> Receive;
+
+        private void _networkChannel_Receive(object sender, Message<TSender> e)
+        {
+            this.Receive?.Invoke(this,
+                new SegmentMessage<TSender>(e.Sender, e.IsOwnMessage,
+                    ByteHelper.RemoveTrail(e.Data)));
         }
     }
 }

@@ -23,6 +23,15 @@ namespace ByteChannel
             this._registration = this.RegisterSendTimeout(options.WaitTimeout);
         }
 
+        public void Dispose()
+        {
+            this._padder.Receive -= this._padder_Receive;
+            this._padder.Dispose();
+
+            this._registration.Unregister(null);
+            this._timeoutResetEvent.Dispose();
+        }
+
         private RegisteredWaitHandle RegisterSendTimeout(TimeSpan timeout)
         {
             return ThreadPool.RegisterWaitForSingleObject(this._timeoutResetEvent, (state, timedOut) =>
@@ -105,17 +114,6 @@ namespace ByteChannel
                 this._pointer = Config.CounterOffset - 1;
 
             return ++this._pointer;
-        }
-
-        public void Dispose()
-        {
-            this._padder.Dispose();
-
-            this._registration.Unregister(null);
-            this._timeoutResetEvent.Dispose();
-
-            this._sentQueue.Clear();
-            this._sendQueue.Clear();
         }
     }
 }

@@ -5,45 +5,61 @@ using ByteChannel;
 
 namespace ByteProtocol
 {
+    /// <summary>
+    /// Represents a IByteChannel factory that is implemented using ByteProtocol.
+    /// </summary>
+    /// <typeparam name="TSender">The type of the sender.</typeparam>
     public class ByteProtocol<TSender> : IDisposable
     {
-        private const string ProtocolName = "ByteProtocol1";
+        private const string ProtocolName = "ByteProto V1";
         private ByteProtocolChannel<TSender> _byteProtocol;
-        private readonly IByteChannel<TSender> _channel;
+        private readonly IMessageChannel<TSender> _channel;
         private readonly Dictionary<string, ProtocolChannel<TSender>> _protocols = new Dictionary<string, ProtocolChannel<TSender>>();
+        private readonly HashSet<byte> _usedIds = new HashSet<byte>();
 
-        public ByteProtocol(IByteChannel<TSender> channel)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ByteProtocol{TSender}"/> class.
+        /// </summary>
+        /// <param name="channel">The channel.</param>
+        public ByteProtocol(IMessageChannel<TSender> channel)
         {
             this._channel = channel;
             this._channel.Receive += this._channel_Receive;
             this._channel.RemovedSender += this._channel_RemovedSender;
-            
-            this.RegisteProtocolInternal(ProtocolName, p =>
+
+            this.RegisterProtocolInternal(ProtocolName, p =>
             {
                 this._byteProtocol = new ByteProtocolChannel<TSender>(p);
                 this._byteProtocol.ProtocolDiscovered += this._byteProtocol_ProtocolDiscovered;
+                this._byteProtocol.ProtocolDeleted += this._byteProtocol_ProtocolDeleted;
             });
         }
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             this._channel.Receive -= this._channel_Receive;
             this._channel.RemovedSender -= this._channel_RemovedSender;
         }
 
-        public IByteChannel<TSender> RegisterProtocol(string protocolName)
+        /// <summary>
+        /// Registers a protocol using the given unique protocol name.
+        /// </summary>
+        /// <param name="protocolName">Name of the protocol.</param>
+        /// <returns></returns>
+        public IMessageChannel<TSender> RegisterProtocol(string protocolName)
         {
-            IByteChannel<TSender> proto = null;
-            this.RegisteProtocolInternal(protocolName, p => proto = p);
+            IMessageChannel<TSender> proto = null;
+            this.RegisterProtocolInternal(protocolName, p => proto = p);
             return proto;
         }
 
-        private void RegisteProtocolInternal(string protocolName, Action<IByteChannel<TSender>> callback)
+        private void RegisterProtocolInternal(string protocolName, Action<IMessageChannel<TSender>> callback)
         {
             if (string.IsNullOrEmpty(protocolName))
                 throw new ArgumentNullException(nameof(protocolName));
-            if (this._protocols.Count > byte.MaxValue)
-                throw new InvalidOperationException("Only 256 protocols can be registered at once.");
 
             ProtocolChannel<TSender> proto;
             lock (this._protocols)
@@ -51,7 +67,7 @@ namespace ByteProtocol
                 if (this._protocols.ContainsKey(protocolName))
                     throw new InvalidOperationException("The given protocol is already registered!");
 
-                var protocolId = (byte)this._protocols.Count;
+                var protocolId = this.GetFreeId();
                 proto = new ProtocolChannel<TSender>(this, protocolName, protocolId);
                 this._protocols.Add(protocolName, proto);
             }
@@ -60,18 +76,24 @@ namespace ByteProtocol
             this.Reset(proto);
         }
 
-        //public bool UnregisterProtocol(string protocolName)
-        //{
-        //    lock (this._protocols)
-        //    {
-        //        Protocol<TSender> proto;
-        //        if (this._protocols.TryGetValue(protocolName, out proto))
-        //        {
-        //            this._byteProtocol.SetProtocol(proto.)
-        //        }
-        //        return this._protocols.Remove(protocolName);
-        //    }
-        //}
+        /// <summary>
+        /// Unregisters a protocol.
+        /// </summary>
+        /// <param name="protocolName">Name of the protocol.</param>
+        /// <returns></returns>
+        public bool UnregisterProtocol(string protocolName)
+        {
+            lock (this._protocols)
+            {
+                ProtocolChannel<TSender> proto;
+                if (this._protocols.TryGetValue(protocolName, out proto))
+                {
+                    this._byteProtocol.SetProtocol(proto.Id, String.Empty);
+                    this._usedIds.Remove(proto.Id);
+                }
+                return this._protocols.Remove(protocolName);
+            }
+        }
 
         internal void Send(ProtocolChannel<TSender> protocolChannel, byte[] bytes)
         {
@@ -93,6 +115,24 @@ namespace ByteProtocol
         {
             this._byteProtocol.RemoveSender(sender, protocolChannel.Id);
             protocolChannel.OnRemovedSender(sender);
+        }
+
+        private byte GetFreeId()
+        {
+            if (this._usedIds.Count > byte.MaxValue)
+                throw new InvalidOperationException("Only 256 protocols can be registered at once.");
+
+            for (int i = byte.MinValue; i <= byte.MaxValue; i++)
+            {
+                var b = (byte)i;
+                if (this._usedIds.Contains(b)) continue;
+
+                this._usedIds.Add(b);
+                return b;
+            }
+
+            // This code should never run
+            throw new InvalidOperationException("Unable to find an available protocol id.");
         }
 
         private void _channel_Receive(object sender, Message<TSender> e)
@@ -129,15 +169,25 @@ namespace ByteProtocol
                         this.RemoveSender(proto, e);
             this._byteProtocol.RemoveSender(e);
         }
-        
-        private void _byteProtocol_ProtocolDiscovered(object sender, KeyValuePair<TSender, string> e)
+
+        private void _byteProtocol_ProtocolDiscovered(object sender, KeyValuePair<Message<TSender>, string> e)
         {
             ProtocolChannel<TSender> proto;
             lock (this._protocols) this._protocols.TryGetValue(e.Value, out proto);
             if (proto != null)
             {
-                proto.Announced = false;
-                proto.OnDiscoverSender(e.Key);
+                if (!e.Key.IsOwnMessage) proto.Announced = false;
+                proto.OnDiscoverSender(e.Key.Sender);
+            }
+        }
+
+        private void _byteProtocol_ProtocolDeleted(object sender, KeyValuePair<Message<TSender>, string> e)
+        {
+            ProtocolChannel<TSender> proto;
+            lock (this._protocols) this._protocols.TryGetValue(e.Value, out proto);
+            if (proto != null)
+            {
+                this.RemoveSender(proto, e.Key.Sender);
             }
         }
     }

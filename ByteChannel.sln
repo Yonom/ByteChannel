@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByteProtocol", "ByteProtoco
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ByteProtocol.Demo", "ByteProtocol.Demo\ByteProtocol.Demo.csproj", "{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserChannel", "UserChannel\UserChannel.csproj", "{CF710020-6D9C-4BA0-AE3F-0B0BB235876E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserChannel.Demo", "UserChannel.Demo\UserChannel.Demo.csproj", "{9D490186-F90F-4157-A4E6-F3E9EB6AD899}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +42,14 @@ Global
 		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{668EBDD3-9DA7-4680-BB1B-AFF8E3533061}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF710020-6D9C-4BA0-AE3F-0B0BB235876E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF710020-6D9C-4BA0-AE3F-0B0BB235876E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF710020-6D9C-4BA0-AE3F-0B0BB235876E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF710020-6D9C-4BA0-AE3F-0B0BB235876E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D490186-F90F-4157-A4E6-F3E9EB6AD899}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D490186-F90F-4157-A4E6-F3E9EB6AD899}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D490186-F90F-4157-A4E6-F3E9EB6AD899}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D490186-F90F-4157-A4E6-F3E9EB6AD899}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

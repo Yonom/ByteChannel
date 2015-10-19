@@ -55,6 +55,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ArraySegmentExtensions.cs" />
     <Compile Include="ByteChannelTests.cs" />
     <Compile Include="PacketBufferTests.cs" />
     <Compile Include="PacketCheckerTests.cs" />

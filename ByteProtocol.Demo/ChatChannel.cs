@@ -5,16 +5,23 @@ using ByteChannel;
 
 namespace ByteProtocol.Demo
 {
-    internal class ChatChannel : IChannel<string, Chat>
+    internal class ChatChannel : IChannel<string, Chat>, IDisposable
     {
-        private readonly IByteChannel<Player> _channel;
+        private readonly IMessageChannel<Player> _channel;
 
-        public ChatChannel(IByteChannel<Player> channel)
+        public ChatChannel(IMessageChannel<Player> channel)
         {
             this._channel = channel;
             this._channel.DiscoverSender += this._channel_DiscoverSender;
             this._channel.RemovedSender += this._channel_RemovedSender;
             this._channel.Receive += this.Channel_Receive;
+        }
+
+        public void Dispose()
+        {
+            this._channel.DiscoverSender -= this._channel_DiscoverSender;
+            this._channel.RemovedSender -= this._channel_RemovedSender;
+            this._channel.Receive -= this.Channel_Receive;
         }
 
         private void _channel_DiscoverSender(object sender, Player e)

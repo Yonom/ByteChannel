@@ -4,15 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D898E93A-6958-4705-894D-832623F0434F}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{9D490186-F90F-4157-A4E6-F3E9EB6AD899}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ByteProtocol</RootNamespace>
-    <AssemblyName>ByteProtocol</AssemblyName>
+    <RootNamespace>UserChannel.Demo</RootNamespace>
+    <AssemblyName>UserChannel.Demo</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -22,36 +23,61 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\ByteProtocol.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BotBits, Version=1.0.0.0, Culture=neutral, PublicKeyToken=8d4a7b115348c43d, processorArchitecture=MSIL">
+      <HintPath>..\packages\BotBits.1.6.0-beta8\lib\net40\BotBits.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="BotBits.Commands, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BotBits.Commands.1.2.2\lib\net40\BotBits.Commands.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="BotCake, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\BotCake.1.0.3\lib\net40\BotCake.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PlayerIOClient, Version=2.3.6.0, Culture=neutral, PublicKeyToken=c7f7b730653f6a44, processorArchitecture=MSIL">
+      <HintPath>..\packages\PlayerIOClient-Signed.3.2.369\lib\PlayerIOClient.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ByteHelper.cs" />
-    <Compile Include="ByteProtocol.cs" />
-    <Compile Include="ByteProtocolChannel.cs" />
-    <Compile Include="ByteProtocolMessage.cs" />
+    <Compile Include="CoinChannel.cs" />
+    <Compile Include="MyBot.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ProtocolChannel.cs" />
-    <Compile Include="ProtocolMap.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ByteChannel\ByteChannel.csproj">
       <Project>{3158ecc9-b5eb-4767-adb3-9497da138368}</Project>
       <Name>ByteChannel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ByteProtocol\ByteProtocol.csproj">
+      <Project>{d898e93a-6958-4705-894d-832623f0434f}</Project>
+      <Name>ByteProtocol</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\UserChannel\UserChannel.csproj">
+      <Project>{cf710020-6d9c-4ba0-ae3f-0b0bb235876e}</Project>
+      <Name>UserChannel</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

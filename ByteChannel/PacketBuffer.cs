@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ByteChannel
 {
@@ -14,6 +13,12 @@ namespace ByteChannel
         {
             this._checker = checker;
             this._checker.Receive += this._checker_Receive;
+        }
+
+        public void Dispose()
+        {
+            this._checker.Dispose();
+            this._checker.Receive -= this._checker_Receive;
         }
 
         private void _checker_Receive(object sender, OrderedMessage<TSender> e)
@@ -89,12 +94,6 @@ namespace ByteChannel
                     yield return data.Value;
                 }
             }
-        }
-
-        public void Dispose()
-        {
-            this._checker.Dispose();
-            this._buffers.Clear();
         }
     }
 }

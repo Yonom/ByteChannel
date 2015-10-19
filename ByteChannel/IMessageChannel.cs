@@ -1,15 +1,16 @@
 ﻿namespace ByteChannel
 {
     /// <summary>
-    /// Represents a channel through which bytes can be sent.
+    /// Represents a channel through which messages are sent.
     /// </summary>
     /// <typeparam name="TSender">The type of the sender.</typeparam>
-    public interface IByteChannel<TSender> : IChannel<byte[], Message<TSender>>
+    public interface IMessageChannel<TSender> : IChannel<byte[], Message<TSender>>
     {
         /// <summary>
         /// Queues a reset message. This function is automatically called whenever a new user is detected.
         /// </summary>
         void Reset();
+
         /// <summary>
         /// Removes the given sender's buffer. Use when a user logs off to free memory.
         /// </summary>

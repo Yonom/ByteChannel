@@ -11,9 +11,10 @@ namespace ByteProtocol
         {
             lock (this._protocols)
             {
-                var contains = this._protocols.ContainsKey(protocolId);
+                string old;
+                this._protocols.TryGetValue(protocolId, out old);
                 this._protocols[protocolId] = protocolName;
-                return !contains;
+                return old != protocolName;
             }
         }
 

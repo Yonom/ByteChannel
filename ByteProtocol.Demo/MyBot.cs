@@ -1,4 +1,6 @@
 using System;
+using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using BotBits;
 using BotBits.Events;
@@ -15,7 +17,7 @@ namespace ByteProtocol.Demo
         public void On(JoinCompleteEvent e)
         {
             var bp = new ByteProtocol<Player>(this._byteChannel);
-            var cc = new ChatChannel(bp.RegisterProtocol("My awesome chat protocol"));
+            var cc = new ChatChannel(new CompressionChannel<Player>(bp.RegisterProtocol("EE Chat")));
 
             ThreadPool.QueueUserWorkItem(o =>
             {
@@ -27,7 +29,6 @@ namespace ByteProtocol.Demo
 
             cc.Receive += this.Cc_Receive;
         }
-
 
         [EventListener]
         public void On(LeaveEvent e)

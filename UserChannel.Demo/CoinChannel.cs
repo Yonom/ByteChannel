@@ -1,12 +1,11 @@
 using System;
-using System.Text;
 using BotBits;
 using BotBits.Events;
 using BotBits.SendMessages;
 using BotCake;
 using ByteChannel;
 
-namespace ByteProtocol.Demo
+namespace UserChannel.Demo
 {
     internal class CoinChannel : BotBase, INetworkChannel<Player>
     {
